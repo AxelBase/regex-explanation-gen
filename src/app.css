@@ -1,0 +1,84 @@
+/* src/app.css */
+:root {
+  --primary-claret: #641C34;
+  --primary-light: #852d4d;
+  --primary-fade: rgba(100, 28, 52, 0.05);
+  --text-dark: #2c3e50;
+  --white: #ffffff;
+  --bubbly-radius: 25px;
+  --card-radius: 30px;
+}
+
+body {
+  font-family: 'Quicksand', sans-serif;
+  background: linear-gradient(135deg, #fdfbfd 0%, #e8dce2 100%);
+  min-height: 100vh;
+  /* Padding to prevent content from being hidden behind fixed nav/footer */
+  padding-top: 80px; 
+  padding-bottom: 60px;
+  color: var(--text-dark);
+}
+
+/* Typography overrides */
+h1, h2, h3, h4, h5 {
+  font-weight: 700;
+  color: var(--primary-claret);
+}
+
+code {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.9em;
+}
+
+/* Bubbly & Smooth Utilities */
+.btn {
+  border-radius: var(--bubbly-radius);
+  font-weight: 600;
+  padding: 0.6rem 1.5rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 6px rgba(100, 28, 52, 0.1);
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(100, 28, 52, 0.2);
+}
+
+.btn-primary {
+  background-color: var(--primary-claret);
+  border-color: var(--primary-claret);
+}
+
+.btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+  background-color: var(--primary-light) !important;
+  border-color: var(--primary-light) !important;
+}
+
+/* Card Styling */
+.card {
+  border-radius: var(--card-radius);
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 15px 35px rgba(100, 28, 52, 0.1);
+  backdrop-filter: blur(5px);
+}
+
+.form-control, .form-select {
+  border-radius: 15px;
+  border: 2px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-claret);
+  box-shadow: 0 0 0 4px var(--primary-fade);
+}
+
+.form-control-lg,
+.form-select-lg {
+  font-size: 1.1rem !important;
+}
+
+.font-monospace {
+  font-family: 'Courier New', Consolas, monospace;
+}
