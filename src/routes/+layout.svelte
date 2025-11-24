@@ -1,71 +1,103 @@
 <script lang="ts">
   import { base } from '$app/paths';
   import { page } from '$app/stores';
+  import { fly } from 'svelte/transition';
   import "../app.css";
 
-  // === Buy Me a Coffee Configuration ===
-  // Replace 'yourpaypal' with your actual PayPal username
-  const paypalUsername = 'AxelLab427'; // ← CHANGE THIS!
+  // Buy Me a Coffee Config
+  const paypalUsername = 'AxelLab427';
   const donationAmounts = [1, 3, 5, 10];
 
   let isDropdownOpen = false;
+  let menuRef: HTMLDivElement;
 
-  function toggleDropdown() {
+  function toggleDropdown(e: MouseEvent) {
+    e.stopPropagation();
     isDropdownOpen = !isDropdownOpen;
+    if (isDropdownOpen) setTimeout(() => menuRef?.focus(), 0);
   }
 
   function closeDropdown() {
     isDropdownOpen = false;
   }
 
-  // Close dropdown when clicking outside
-  function clickOutside(node: HTMLElement) {
-    const handleClick = (event: MouseEvent) => {
-      if (node && !node.contains(event.target as Node)) {
-        node.dispatchEvent(new CustomEvent('click_outside'));
-      }
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Escape') closeDropdown();
+  }
+
+  // Click outside
+  function clickOutside(node: HTMLElement, callback: () => void) {
+    const handle = (e: MouseEvent) => {
+      if (node && !node.contains(e.target as Node)) callback();
     };
-    document.addEventListener('click', handleClick, true);
-    return {
-      destroy() {
-        document.removeEventListener('click', handleClick, true);
-      }
-    };
+    document.addEventListener('click', handle, true);
+    return { destroy: () => document.removeEventListener('click', handle, true) };
   }
 </script>
 
 <nav class="navbar navbar-expand-lg fixed-top custom-navbar">
   <div class="container-fluid px-4">
     <div class="d-flex align-items-center gap-3">
-      <!-- Logo + Brand -->
+      <!-- Logo -->
       <a class="navbar-brand d-flex align-items-center gap-2 text-white fw-bold" href="{base}/">
         <img src="{base}/AxelLab-Logo.ico" alt="AxelBase Logo" width="32" height="32" class="rounded-circle bg-white p-1">
         AxelBase
       </a>
 
-      <!-- Buy Me a Coffee Dropdown (Desktop) -->
-      <div class="position-relative d-none d-md-block" use:clickOutside on:click_outside={closeDropdown}>
+      <!-- Desktop Dropdown -->
+      <div class="position-relative d-none d-md-block" use:clickOutside={closeDropdown}>
         <button
+          id="bmac-button"
+          type="button"
           class="btn bmac-btn d-flex align-items-center gap-2"
-          on:click={toggleDropdown}
+          on:click|preventDefault|stopPropagation={toggleDropdown}
           aria-expanded={isDropdownOpen}
+          aria-haspopup="true"
           aria-label="Support the developer - Buy me a coffee"
         >
-          <i class="bi bi-cup-hot-fill"></i>
           Buy me a coffee
           <i class="bi bi-chevron-down small ms-1"></i>
         </button>
 
         {#if isDropdownOpen}
-          <div class="bmac-dropdown shadow-lg" transition:fly={{ y: -10, duration: 250 }}>
+          <div
+            class="bmac-backdrop"
+            on:click={closeDropdown}
+            on:keydown={handleKeyDown}
+            role="presentation"
+            tabindex="-1"
+          ></div>
 
-            {#each donationAmounts as amount}
+          <div
+            class="bmac-dropdown shadow-lg"
+            bind:this={menuRef}
+            transition:fly={{ y: -10, duration: 250 }}
+            role="menu"
+            aria-labelledby="bmac-button"
+            tabindex="0"
+            on:keydown={handleKeyDown}
+            on:click|stopPropagation
+          >
+            <div class="bmac-header" role="none">Support the Dev</div>
+            {#each donationAmounts as amount, i}
               <a
                 href="https://paypal.me/{paypalUsername}/{amount}"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="bmac-item"
+                role="menuitem"
+                tabindex="0"
                 on:click={closeDropdown}
+                on:keydown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    closeDropdown();
+                    window.open(`https://paypal.me/${paypalUsername}/${amount}`, '_blank');
+                  }
+                  if (e.key === 'Tab' && !e.shiftKey && i === donationAmounts.length - 1) {
+                    closeDropdown(); // Close on last tab out
+                  }
+                }}
               >
                 <span class="fw-bold">${amount}</span>
                 <i class="bi bi-paypal"></i>
@@ -76,7 +108,7 @@
       </div>
     </div>
 
-    <!-- Mobile Menu Toggle -->
+    <!-- Mobile Toggle -->
     <button
       class="navbar-toggler border-0 text-white"
       type="button"
@@ -84,14 +116,13 @@
       data-bs-target="#navbarNav"
       aria-controls="navbarNav"
       aria-expanded="false"
-      aria-label="Toggle navigation menu"
+      aria-label="Toggle navigation"
     >
       <i class="bi bi-list fs-2"></i>
     </button>
 
-    <!-- Navigation Links -->
+    <!-- Nav Links + Mobile Donate -->
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-      <!-- Mobile Buy Me a Coffee Button -->
       <div class="d-md-none my-3">
         <a
           href="https://paypal.me/{paypalUsername}/3"
@@ -99,7 +130,6 @@
           rel="noopener noreferrer"
           class="btn btn-light w-100 text-danger fw-bold d-flex align-items-center justify-content-center gap-2"
         >
-          <i class="bi bi-cup-hot-fill"></i>
           Buy me a coffee ($3)
         </a>
       </div>
@@ -110,10 +140,9 @@
         <li class="nav-item"><a class="nav-link nav-pill" href="{base}/#how-to">How to use</a></li>
         <li class="nav-item"><a class="nav-link nav-pill" href="{base}/#faq">FAQ</a></li>
         <li class="nav-item">
-          <a
-            class="nav-link nav-pill {$page.url.pathname === `${base}/blog` ? 'active' : ''}"
-            href="{base}/blog"
-          >Blog</a>
+          <a class="nav-link nav-pill {$page.url.pathname === `${base}/blog` ? 'active' : ''}" href="{base}/blog">
+            Blog
+          </a>
         </li>
       </ul>
     </div>
@@ -156,7 +185,6 @@
     color: rgba(255,255,255,0.7);
     text-decoration: none;
     font-size: 0.85rem;
-    transition: color 0.2s;
   }
   .footer-link:hover { color: #fff; text-decoration: underline; }
 
@@ -173,7 +201,6 @@
     transform: translateY(-1px);
   }
 
-  /* Buy Me a Coffee Button */
   .bmac-btn {
     background: rgba(255,255,255,0.1);
     color: white;
@@ -190,7 +217,13 @@
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
   }
 
-  /* Dropdown */
+  .bmac-backdrop {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    z-index: 1049;
+  }
+
   .bmac-dropdown {
     position: absolute;
     top: 120%;
@@ -201,6 +234,17 @@
     width: 160px;
     overflow: hidden;
     z-index: 1050;
+  }
+
+  .bmac-header {
+    background: #641c34;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
   .bmac-item {
@@ -214,5 +258,5 @@
     border-bottom: 1px solid #f0f0f0;
   }
   .bmac-item:last-child { border-bottom: none; }
-  .bmac-item:hover { background: #fff0f5; }
+  .bmac-item:hover, .bmac-item:focus { background: #fff0f5; outline: none; }
 </style>
